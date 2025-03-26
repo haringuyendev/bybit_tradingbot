@@ -14,8 +14,24 @@ from bybit import api, secret, bot_token, chat_id, BYBIT_WS_URL, SYMBOLS, TP_PER
 bot = Bot(token=bot_token)
 
 # Dictionary lưu trạng thái từng symbol
-symbol_data = {symbol: {"buy_level": 0, "sell_level": 0, "buy_qty": 0, "sell_qty": 0} for symbol in SYMBOLS}
-
+symbol_data = {
+    symbol: {
+        "buy_level": 0,
+        "sell_level": 0,
+        "buy_qty": 0,
+        "sell_qty": 0,
+        "count_buy":0,
+        "count_sell":0,
+        "PL_PERCENT_LV1":0.032,
+        "NUM_POS_LV1": 5,
+        "PL_PERCENT_LV2":0.016,
+        "NUM_POS_LV2": 10,
+        "PL_PERCENT_LV3":0.008,
+        "NUM_POS_LV3": 20,
+        "PL_PERCENT_LV4":0.004,
+        "NUM_POS_LV4": 30,
+    } for symbol in SYMBOLS
+}
 # Setting chạy testnet hay mainnet (Test net để test, mainnet để chạy tài khoản thực)
 session = HTTP(
     # demo=True, # Nếu chạy tài khoản thực thì bỏ dòng này
@@ -166,12 +182,14 @@ async def manage_orders(symbol, price):
     
     if buy_qty == 0:
         data["buy_level"] = 0
+        data["count_buy"]=0
     else:
         data["buy_level"] = entry_price_buy
         data["buy_qty"] = buy_qty
 
     if sell_qty == 0:
         data["sell_level"] = 0
+        data["count_sell"]=0
     else:
         data["sell_level"] = entry_price_sell
         data["sell_qty"] = sell_qty
@@ -180,27 +198,55 @@ async def manage_orders(symbol, price):
         data["buy_level"] = price
         min_qty = (get_min_notional(symbol) + 1) / price
         data["buy_qty"] = math.ceil(min_qty) # Sửa số lượng theo cần thiết
+        data["count_buy"]+=1
         await place_order(symbol, "Buy", data["buy_qty"],"Buy")
         await update_take_profit(symbol, "Buy")
-    elif price <= data["buy_level"] * (1 - PL_PERCENT):
-        data["buy_level"] = price
-        min_qty = (get_min_notional(symbol) + 1) / price
-        data["buy_qty"] += math.ceil(min_qty)
-        await place_order(symbol, "Buy", data["buy_qty"], "Buy")
-        await update_take_profit(symbol, "Buy")
+    else:
+        tp_price_down = data["buy_level"] * (1 - PL_PERCENT)
+        if(data["count_buy"]<=data["NUM_POS_LV1"]):
+            tp_price_down = data["buy_level"] * (1 - data["PL_PERCENT_LV1"])
+        elif(data["count_buy"]>data["NUM_POS_LV1"] and data["count_buy"]<=data["NUM_POS_LV2"]):
+            tp_price_down = data["buy_level"] * (1 - data["PL_PERCENT_LV2"])
+        elif(data["count_buy"]>data["NUM_POS_LV2"] and data["count_buy"]<=data["NUM_POS_LV3"]):
+            tp_price_down = data["buy_level"] * (1 - data["PL_PERCENT_LV3"])
+        elif(data["count_buy"]>data["NUM_POS_LV3"] and data["count_buy"]<=data["NUM_POS_LV4"]):
+            tp_price_down = data["buy_level"] * (1 - data["PL_PERCENT_LV4"])
+        else:
+            tp_price_down = data["buy_level"] * (1 - data["PL_PERCENT_LV4"])
+        if price <= tp_price_down:
+            data["buy_level"] = price
+            min_qty = (get_min_notional(symbol) + 1) / price
+            data["buy_qty"] += math.ceil(min_qty)
+            data["count_buy"]+=1
+            await place_order(symbol, "Buy", data["buy_qty"], "Buy")
+            await update_take_profit(symbol, "Buy")
 
     if data["sell_level"] == 0:
         data["sell_level"] = price
         min_qty = (get_min_notional(symbol) + 1) / price
         data["sell_qty"] = math.ceil(min_qty)
+        data["count_sell"]+=1
         await place_order(symbol, "Sell", data["sell_qty"], "Sell")
         await update_take_profit(symbol, "Sell")
-    elif price >= data["sell_level"] * (1 + PL_PERCENT):
-        data["sell_level"] = price
-        min_qty = (get_min_notional(symbol) + 1) / price
-        data["sell_qty"] += math.ceil(min_qty)
-        await place_order(symbol, "Sell", data["sell_qty"], "Sell")
-        await update_take_profit(symbol, "Sell")
+    else:
+        tp_price_up = data["sell_level"] * (1 + PL_PERCENT)
+        if(data["count_sell"]<=data["NUM_POS_LV1"]):
+            tp_price_up = data["buy_level"] * (1 + data["PL_PERCENT_LV1"])
+        elif(data["count_sell"]>data["NUM_POS_LV1"] and data["count_sell"]<=data["NUM_POS_LV2"]):
+            tp_price_up = data["buy_level"] * (1 + data["PL_PERCENT_LV2"])
+        elif(data["count_sell"]>data["NUM_POS_LV2"] and data["count_sell"]<=data["NUM_POS_LV3"]):
+            tp_price_up = data["buy_level"] * (1 + data["PL_PERCENT_LV3"])
+        elif(data["count_sell"]>data["NUM_POS_LV3"] and data["count_sell"]<=data["NUM_POS_LV4"]):
+            tp_price_up = data["buy_level"] * (1 + data["PL_PERCENT_LV4"])
+        else:
+            tp_price_up = data["buy_level"] * (1 + data["PL_PERCENT_LV4"])
+        if price >= tp_price_up:
+            data["sell_level"] = price
+            min_qty = (get_min_notional(symbol) + 1) / price
+            data["sell_qty"] += math.ceil(min_qty)
+            data["count_sell"]+=1
+            await place_order(symbol, "Sell", data["sell_qty"], "Sell")
+            await update_take_profit(symbol, "Sell")
 
     print("Buy Level: ",data["buy_level"], "Buy Qty: ",data["buy_qty"], "Sell Level: ",data["sell_level"], "Sell Qty: ",data["sell_qty"])
 

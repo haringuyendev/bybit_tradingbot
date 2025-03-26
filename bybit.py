@@ -11,5 +11,5 @@ BYBIT_WS_URL = "wss://stream.bybit.com/v5/public/linear"
 SYMBOLS = ["ADAUSDT", "XRPUSDT", "DOGEUSDT"]
 
 # Setting bot
-TP_PERCENT = 0.005 #take profit theo % giá (0.5%)
+TP_PERCENT = 0.01 #take profit theo % giá (0.5%)
 PL_PERCENT = 0.02 # Đặt lệnh mỗi khi giá lên % (2%)
