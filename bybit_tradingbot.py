@@ -183,14 +183,14 @@ async def manage_orders(symbol, price):
     if buy_qty == 0:
         data["buy_level"] = 0
         data["count_buy"]=0
-    else:
+    elif buy_qty>0 and data["buy_level"]==0:
         data["buy_level"] = entry_price_buy
         data["buy_qty"] = buy_qty
 
     if sell_qty == 0:
         data["sell_level"] = 0
         data["count_sell"]=0
-    else:
+    elif sell_qty>0 and data["sell_level"]==0:
         data["sell_level"] = entry_price_sell
         data["sell_qty"] = sell_qty
 
