@@ -231,15 +231,15 @@ async def manage_orders(symbol, price):
     else:
         tp_price_up = data["sell_level"] * (1 + PL_PERCENT)
         if(data["count_sell"]<=data["NUM_POS_LV1"]):
-            tp_price_up = data["buy_level"] * (1 + data["PL_PERCENT_LV1"])
+            tp_price_up = data["sell_level"] * (1 + data["PL_PERCENT_LV1"])
         elif(data["count_sell"]>data["NUM_POS_LV1"] and data["count_sell"]<=data["NUM_POS_LV2"]):
-            tp_price_up = data["buy_level"] * (1 + data["PL_PERCENT_LV2"])
+            tp_price_up = data["sell_level"] * (1 + data["PL_PERCENT_LV2"])
         elif(data["count_sell"]>data["NUM_POS_LV2"] and data["count_sell"]<=data["NUM_POS_LV3"]):
-            tp_price_up = data["buy_level"] * (1 + data["PL_PERCENT_LV3"])
+            tp_price_up = data["sell_level"] * (1 + data["PL_PERCENT_LV3"])
         elif(data["count_sell"]>data["NUM_POS_LV3"] and data["count_sell"]<=data["NUM_POS_LV4"]):
-            tp_price_up = data["buy_level"] * (1 + data["PL_PERCENT_LV4"])
+            tp_price_up = data["sell_level"] * (1 + data["PL_PERCENT_LV4"])
         else:
-            tp_price_up = data["buy_level"] * (1 + data["PL_PERCENT_LV4"])
+            tp_price_up = data["sell_level"] * (1 + data["PL_PERCENT_LV4"])
         if price >= tp_price_up:
             data["sell_level"] = price
             min_qty = (get_min_notional(symbol) + 1) / price
